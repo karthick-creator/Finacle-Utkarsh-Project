@@ -1,0 +1,127 @@
+#------------------------------------------------------------------------------------------
+# File Name                     :       Utkarsh_Ast_RL_218_CBPIE_business_vertical_BATCH.scr 
+# Start Date                    :       28-08-2025
+# Description                   :       RL_216 - This script is used to insert the value to the CUSTOM.BUSSINESS_VERT_DTLS_MAIN custom table.
+# MenuOption                    :       CBPIE - Batch job
+# Author                        :       KARTHICK G 
+# Calling Script                :       NA
+# Called Script                 :       
+# Library                       :       
+# Requirement Id                :       RL_216 
+# Modification History
+#------------------------------------------------------------------------------------------
+# S.No. |       Date            |       Name                       |       Description
+# -----         ----------              ----------------------  -------------------------------
+#  1    |       28-08-2025      |       KARTHICK G                  |       Original Version
+#------------------------------------------------------------------------------------------
+<--START
+TRACE ON
+
+ 	#===============================================================#
+        #                      CREATING REPOSITORY                      #
+        #===============================================================#
+        IF(REPEXISTS("UTKARSH") == 0) THEN
+        #{
+                CREATEREP("UTKARSH")
+        #}
+        ENDIF
+        #===============================================================#
+        #                      CREATING CLASS                           #
+        #===============================================================#
+        IF(CLASSEXISTS("UTKARSH","RL218") == 0) THEN
+        #{
+                CREATECLASS("UTKARSH","RL218",5)
+        #}
+        ENDIF
+        #===============================================================#
+        #                  PRINTING BANCS REPOSITORY                    #
+        #===============================================================#
+        sv_u = urhk_B2K_PrintRepos("BANCS")
+        PRINT(sv_u)
+
+        #===============================================================#
+        #              INTIALIZING AND ASSIGNING VARIABLES              #
+        #===============================================================#
+
+	UTKARSH.RL218.bodDate    		= "" 
+	UTKARSH.RL218.repFile    		= ""
+	UTKARSH.RL218.error	 			= ""
+	UTKARSH.RL218.errorFocus 		= ""	
+    UTKARSH.RL218.lstFileName		= ""
+	BANCS.STDIN.BODDate				= "31-03-2024 00:00:00"
+		
+	#----------------------------------------------------------------------
+    #Output file records
+    #----------------------------------------------------------------------
+
+	UTKARSH.RL218.lstFileName = "bussinessVertical_RL218.lst"
+		
+        #===============================================================#
+        #               GETTING INPUT VALUES FROM "BANCS"               #
+        #===============================================================#
+	
+        IF(FIELDEXISTS(BANCS.STDIN.BODDate))THEN
+        #{
+        	UTKARSH.RL218.bodDate = MID$(BANCS.STDIN.BODDate,0,10) 
+        	PRINT(UTKARSH.RL218.bodDate)
+        #}
+        ENDIF
+
+	#===============Check if it is month end date==============#
+	sv_s = ""
+	sv_s = sv_s + " monthEndDate|SELECT COUNT(1) FROM dual  "
+	sv_s = sv_s + " WHERE TO_DATE(?SVAR,'DD-MM-YYYY') = LAST_DAY(TO_DATE(?SVAR,'DD-MM-YYYY'))  "
+
+	BANCS.INPARAM.BINDVARS = UTKARSH.RL218.bodDate + "|" + UTKARSH.RL218.bodDate
+	PRINT(BANCS.INPARAM.BINDVARS)
+
+	sv_u = urhk_dbSelectWithBind(sv_s)
+	PRINT(sv_u)		
+	
+	IF(sv_u == 0) THEN
+	#{
+		IF(FIELDEXISTS(BANCS.OUTPARAM.monthEndDate)) THEN
+		#{
+			UTKARSH.RL218.monthEndDate = BANCS.OUTPARAM.monthEndDate	
+		#}
+		ENDIF
+	#}
+	ENDIF	
+		
+        IF(UTKARSH.RL218.monthEndDate == 1) THEN
+        #{
+		sv_d = "exebatch bauu9151 Utkarsh_Ast_RL_218_CBPIE_BUSINESS_VERTICAL_PACK.sql " +UTKARSH.RL218.monthEndDate + " >"+UTKARSH.RL218.lstFileName
+	        PRINT(sv_d)
+                sv_u = SYSTEM(sv_d)
+                PRINT(sv_u)
+
+	        IF(sv_u != 0) THEN
+                #{
+                        UTKARSH.RL218.error= " Internal Error Occured "
+                        UTKARSH.RL218.errorFocus = "dummy"
+                        GOTO ERROR
+                #}
+		ENDIF
+	ELSE
+	#{
+		        UTKARSH.RL218.error= " Given date is not an month end date "
+                        UTKARSH.RL218.errorFocus = "dummy"
+                        GOTO ERROR
+
+        #}
+        ENDIF
+			
+ERROR:
+	IF(UTKARSH.RL218.error != "") THEN
+	#{
+		sv_x=urhk_SetOrbOut("Error_0|Error^" + UTKARSH.RL218.error  + "^" +UTKARSH.RL218.errorFocus)
+        	sv_u = urhk_SetOrbOut("SuccessOrFailure|N")
+	
+	#}
+	ENDIF
+
+EOS:
+EXITSCRIPT
+
+TRACE OFF
+END-->

@@ -1,0 +1,93 @@
+<--START
+TRACE ON
+
+        #========================================#
+        #      REPOSITORY CREATION               #
+        #========================================#
+
+        IF(REPEXISTS("UTKARSH") == 0) THEN
+        #{
+                CREATEREP("UTKARSH")
+        #}
+        ENDIF
+
+        #========================================#
+        #     CLASS CREATION                     #
+        #========================================#
+
+        IF(CLASSEXISTS("UTKARSH","RL218") == 0) THEN
+        #{
+                CREATECLASS("UTKARSH","RL218",5)
+        #}
+        ENDIF
+
+        sv_u = urhk_B2k_PRINTRepos("BANCS")
+        print(sv_u)
+	
+	UTKARSH.RL218.asOnDate = ""	
+	UTKARSH.RL218.error    = ""
+	UTKARSH.RL218.errorfocus    = ""
+	UTKARSH.RL218.jasper    = ""
+	UTKARSH.RL218.lstFile   = ""
+	UTKARSH.RL218.excelFile = ""
+
+	IF(FIELDEXISTS(BANCS.INPUT.asOnDate)) THEN
+	#{
+		UTKARSH.RL218.asOnDate = MID$(BANCS.INPUT.asOnDate,0,10)
+		PRINT(UTKARSH.RL218.asOnDate)
+
+	#}
+	ENDIF
+
+	UTKARSH.RL218.lstFile   = "business_vertical.lst"	
+	sv_a = "exebatch spbx4001 CUSTOM.FIN_BUSSINESS_VERT_RPT_PACK.FIN_BUSSINESS_VERT_RPT_PROC" + " " + UTKARSH.RL218.asOnDate + ">" + UTKARSH.RL218.lstFile
+        PRINT(sv_a)
+        sv_u = SYSTEM(sv_a)
+        PRINT(sv_u)	
+	
+	UTKARSH.RL218.jasper    = "business_vertical.jasper"
+	UTKARSH.RL218.pdfFile   = "business_vertical.xls"	
+        sv_a = "exebatch frbx0001 $B2K_SESSION_ID -t "+UTKARSH.RL218.jasper +" -o "+UTKARSH.RL218.pdfFile+" -d " + UTKARSH.RL218.lstFile + " -z XLS -q -w Manager"
+	print(sv_a)
+	sv_d = system(sv_a)			
+	print(sv_d)	
+
+
+                IF(sv_d == 0)THEN
+                #{
+                                UTKARSH.RL218.rstMsg = "Report file generated successfully. Kindly vist  HPR menu"
+                                GOTO RESULTMSG
+
+                #}
+                ELSE
+                #{
+                                UTKARSH.RL218.errorFlg  = "Y"
+                                UTKARSH.RL218.errorMesg = "Error in report generation"
+                                GOTO ERROR
+
+                #}
+                ENDIF
+
+                 #======================================================================================#
+        ERROR:
+        IF(UTKARSH.RL218.errorFlg != "N") THEN
+        #{
+                sv_u = urhk_SetOrbOut("Error_0|Error^" + UTKARSH.RL218.errorMesg  + "^" + UTKARSH.RL218.errorFocus)
+                sv_u = urhk_SetOrbOut("SuccessOrFailure|N")
+                PRINT(sv_u)
+        #}
+        ENDIF
+                #======================================================================================#
+        #                               SentMessage For Result Page                            #
+        #======================================================================================#
+        RESULTMSG:
+        sv_u   =   urhk_SetOrbOut("SuccessOrFailure|Y")
+        sv_u   =   urhk_SetOrbOut("RESULT_MSG| " + UTKARSH.RL218.rstMsg )
+
+		
+
+
+
+
+TRACE OFF
+END-->

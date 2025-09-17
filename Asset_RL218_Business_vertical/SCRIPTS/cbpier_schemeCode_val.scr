@@ -1,0 +1,70 @@
+#------------------------------------------------------------------------------------------
+# File Name			:	cbpier_schemeCode_val.scr		
+# Start Date			:	22-08-2025
+# Description			:	RL_218 - This script is used to validate the scheme_code 
+# MenuOption			:	CBPIER	
+# Author			:	KARTHICK G
+# Calling Script		:	NA	
+# Called Script			:	NA 
+# Requirement Id		:	RL_218
+# Modification History
+#------------------------------------------------------------------------------------------
+# S.No.	|	Date		|	Name			|	Description
+# ----- 	---------- 		----------------------	-------------------------------
+#  1	|	22-08-2025	|	KARTHICK G		|	Original Version
+#------------------------------------------------------------------------------------------
+<--START
+TRACE ON
+
+        #========================================#
+        #      REPOSITORY CREATION               #
+        #========================================#
+
+        IF(REPEXISTS("UTKARSH") == 0) THEN
+        #{
+                CREATEREP("UTKARSH")
+        #}
+        ENDIF
+
+        #========================================#
+        #     CLASS CREATION                     #
+        #========================================#
+
+        IF(CLASSEXISTS("UTKARSH","RL218") == 0) THEN
+        #{
+                CREATECLASS("UTKARSH","RL218",5)
+        #}
+        ENDIF
+
+        sv_u = urhk_B2k_PRINTRepos("BANCS")
+        print(sv_u)
+
+	UTKARSH.RL218.schmCode = ""
+	
+	IF (FIELDEXISTS(BANCS.INPUT.schmCode)) THEN
+	#{
+		UTKARSH.RL218.schmCode = BANCS.INPUT.schmCode
+		PRINT(UTKARSH.RL218.schmCode)
+	#}
+	ENDIF
+	
+	sv_a = "count|select count(*) from tbaadm.gam where schm_type in ('LAA','ODA') and schm_code = ?SVAR"
+	BANCS.INPARAM.BINDVARS = UTKARSH.RL218.schmCode
+	
+	sv_b = urhk_dbSelectWithBind(sv_a)
+	print(sv_b)
+	
+	IF(sv_b == 0) THEN
+	#{	
+		UTKARSH.RL218.COUNT = BANCS.OUTPARAM.count	
+	#}
+	ENDIF
+	
+	IF(UTKARSH.RL218.COUNT == 0) THEN
+	#{
+		sv_u = urhk_SetOrbOut("Please enter valid Scheme code")
+	#}
+	ENDIF
+
+TRACE OFF
+END-->
